@@ -1,0 +1,9 @@
+BEGIN_PROLOG
+
+dune_larcv_converter:
+{ 
+ module_type:           "larcv_converter"
+ larcv_out_name:     "%ifb_larcv.root"
+}
+
+END_PROLOG
