@@ -24,7 +24,7 @@ IF (NOT CETBUILDTOOLS_VERSION)
     MESSAGE (FATAL_ERROR "ERROR: setup cetbuildtools to get the cmake modules")
 ENDIF()
 
-set(CMAKE_MODULE_PATH $ENV{ART_DIR}/Modules
+set(CMAKE_MODULE_PATH $ENV{CANVAS_ROOT_IO_DIR}/Modules
 		      $ENV{CETBUILDTOOLS_DIR}/Modules
 		      ${CMAKE_MODULE_PATH})
 
@@ -34,8 +34,9 @@ cet_cmake_env()
 cet_set_compiler_flags(DIAGS CAUTIOUS
   WERROR
   NO_UNDEFINED
-  EXTRA_FLAGS -pedantic
-  EXTRA_CXX_FLAGS -std=c++11 )
+  ALLOW_DEPRECATIONS
+  EXTRA_FLAGS -pedantic -Wno-unused-local-typedefs  -O0
+)
 
 cet_report_compiler_flags()
 
@@ -45,6 +46,15 @@ find_ups_product( nutools v1_00_00 )
 find_ups_product( art v1_08_00 )
 find_ups_product( cetbuildtools v4_14_01 )
 
+#  Find all the libraries needed by our dependent CMakeList.txt files
+cet_find_library( BOOST_SERIALIZATION NAMES boost_serialization PATHS ENV BOOST_LIB NO_DEFAULT_PATH )
+cet_find_library( BOOST_DATE_TIME     NAMES boost_date_time     PATHS ENV BOOST_LIB NO_DEFAULT_PATH )
+
+
+if(DEFINED ENV{LAPACK_LIB} )
+  find_ups_product( lapack )
+endif()
+
 # macros for dictionary and simple_plugin
 include(ArtDictionary)
 include(ArtMake)
@@ -53,8 +63,8 @@ include(BuildPlugins)
 # ADD SOURCE CODE SUBDIRECTORIES HERE
 add_subdirectory(larcvconversion)
 
-# tests
-add_subdirectory(test)
+### tests
+###add_subdirectory(test)
 
 # ups - table and config files
 add_subdirectory(ups)

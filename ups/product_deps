@@ -23,8 +23,8 @@ defaultqual c2
 # gdmldir -  
 # fwdir   -  
 #
-incdir	product_dir	include
-libdir	fq_dir		lib
+##incdir	product_dir	include
+##libdir	fq_dir		lib
 bindir	fq_dir		bin
 flcdir  product_dir     fcl
 
@@ -32,17 +32,18 @@ flcdir  product_dir     fcl
 # Add the dependent product and version
 
 product          version
-dunetpc		v07_13_01
-gcc		v6_4_0
-cetbuildtools   v7_06_04       -       only_for_build
+##dunetpc	v07_13_01
+##gcc		v7_3_0
+cetbuildtools   v7_04_00       -       only_for_build
 end_product_list
 
 # We now define allowed qualifiers and the corresponding qualifiers for the depdencies.
 # Make a table by adding columns before "notes". 
 qualifier	larsoft	 	gcc	notes
 c2:debug	c2:debug	-nq-
-c2:opt		c2:opt		-nq-
 c2:prof		c2:prof		-nq-
+e17:debug	e17:debug	-nq-
+e17:prof	e17:prof	-nq-
 end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:
