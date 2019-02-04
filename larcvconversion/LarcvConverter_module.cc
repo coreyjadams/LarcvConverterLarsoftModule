@@ -46,6 +46,8 @@ public:
   // The compiler-generated destructor is fine for non-base
   // classes without bare pointers or other resource use.
 
+  ~LarcvConverter();
+
   // Plugins should not be copied or assigned.
   LarcvConverter(LarcvConverter const &) = delete;
   LarcvConverter(LarcvConverter &&) = delete;
@@ -70,9 +72,13 @@ private:
 
     void reset_larcv_variables();
 
+    size_t column(size_t channel);
+    int projection_id(size_t channel);
+
     std::vector< std::vector< int> > _particle_to_trackID;
     std::map< int, int > _trackID_to_particle;
 
+    float compression = 1.0;
 
     std::vector<larcv::ImageMeta> _image_meta_2d;
     larcv::Voxel3DMeta  _voxel_meta;
@@ -91,7 +97,27 @@ LarcvConverter::LarcvConverter(fhicl::ParameterSet const & p)
   EDAnalyzer(p)  ,
   larcv_out_name(p.get<std::string>("larcv_out_name"))
  // More initializers here.
-{}
+{
+
+  _io = new larcv::IOManager(larcv::IOManager::kWRITE);
+  _io -> set_out_file("larcv_converted.root");
+
+  if (!_io) {
+    std::cout << "Must set io manager before initializing!" << std::endl;
+    throw std::exception();
+  }
+
+
+  _io->initialize();
+}
+
+size_t LarcvConverter::column(size_t channel){
+  return 0;
+}
+int LarcvConverter::projection_id(size_t channel){
+  return 0;
+}
+
 
 void LarcvConverter::analyze(art::Event const & e)
 {
@@ -99,9 +125,9 @@ void LarcvConverter::analyze(art::Event const & e)
   reset_larcv_variables();
 
   // Get the event ID information for this event:
-  int run = e.eventAuxiliary().run();
-  int subrun = e.eventAuxiliary().subRun();
-  int event = e.eventAuxiliary().event();
+  int run = e.run();
+  int subrun = e.subRun();
+  int event = e.event();
 
 
   neutrino_slice(e, _io);
@@ -114,30 +140,26 @@ void LarcvConverter::analyze(art::Event const & e)
 
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///// This code needs to be in an intialize call somehow:
-void LarcvConverter::beginJob(){
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ///// This code needs to be in an intialize call somehow:
+// void LarcvConverter::BeginJob(){
 
-  _io = new IOManager(kWRITE);
-  _io -> set_out_file("larcv_converted.root");
+//   _io = new larcv::IOManager(larcv::IOManager::kWRITE);
+//   _io -> set_out_file("larcv_converted.root");
 
-  if (!_io) {
-    std::cout << "Must set io manager before initializing!" << std::endl;
-    throw std::exception();
-  }
+//   if (!_io) {
+//     std::cout << "Must set io manager before initializing!" << std::endl;
+//     throw std::exception();
+//   }
 
-  // init all modules:
-  for (size_t n = 0; n < _modules.size(); n++) {
-    _modules[n]->initialize();
-  }
 
-  _io->initialize();
-}
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//   _io->initialize();
+// }
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///// This code needs to be in an finalize call somehow:
-void LarcvConverter::endJob(){
+LarcvConverter::~LarcvConverter(){
 
   _io->finalize();
   delete _io;
@@ -163,7 +185,8 @@ void LarcvConverter::initialize_meta(){
   // We'll encode tick in y and wire in x.  Units will be centimeters
   // y (drift direction) goes from -200 to 200 for n_ticks * 2 + spacing
   // x (wire direction) goes from 0
-  _max_tick = 4*n_ticks;
+  float n_ticks = 2000;
+  float _max_tick = 4*n_ticks;
 
   // int _readout_length = 4492;
   // int _n_channels = 30720;
@@ -291,7 +314,7 @@ void LarcvConverter::neutrino_slice(art::Event const & e, larcv::IOManager* io){
 
   art::Handle<std::vector<simb::MCTruth> > mctruth;
 
-  e->getByLabel(neutrino_tag, mctruth);
+  e.getByLabel(neutrino_tag, mctruth);
 
   auto truth = mctruth->at(0);
   auto neutrino = mctruth->at(0).GetNeutrino().Nu();
@@ -367,11 +390,11 @@ void LarcvConverter::cluster_slice(art::Event const & e, larcv::IOManager *io){
       (larcv::EventClusterVoxel3D*)io->get_data("cluster3d", "duneseg");
 
   // This is to hold the clusters in 2d:
-  auto event_cluster2d =
-      (larcv::EventClusterPixel2D*)io->get_data("cluster2d", "duneseg");
+  // auto event_cluster2d =
+      // (larcv::EventClusterPixel2D*)io->get_data("cluster2d", "duneseg");
 
-  auto event_image2d = 
-      (larcv::EventImage2D*)io->get_data("image2d", "dunewire");
+  // auto event_image2d = 
+  //     (larcv::EventImage2D*)io->get_data("image2d", "dunewire");
 
   // This sets up placeholder images:
   std::vector<larcv::Image2D> images;
@@ -498,7 +521,7 @@ void LarcvConverter::cluster_slice(art::Event const & e, larcv::IOManager *io){
 
   // // // Emplace the images:
   // // event_image2d -> emplace(std::move(_images));
-  return
+  return;
 
 }
 
